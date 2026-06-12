@@ -1,0 +1,11 @@
+# --- Telegram-бот поиска тиммейтов (CS2 / Dota 2) ---
+# Python 3.11+
+aiogram>=3.10,<4.0          # асинхронный фреймворк для Telegram-ботов
+SQLAlchemy[asyncio]>=2.0,<2.1  # асинхронный ORM (extra [asyncio] тянет greenlet — он ОБЯЗАТЕЛЕН для async)
+greenlet>=3.0              # требуется async-движку SQLAlchemy (на части платформ не ставится сам)
+aiosqlite>=0.20            # драйвер SQLite (БД по умолчанию, без настройки)
+pydantic-settings>=2.2     # загрузка конфигурации из .env
+python-dotenv>=1.0         # поддержка .env
+
+# Драйвер PostgreSQL (для продакшена под нагрузкой; переключение — через DATABASE_URL в .env).
+asyncpg>=0.29

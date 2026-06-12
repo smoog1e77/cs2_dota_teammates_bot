@@ -1,0 +1,24 @@
+# Секреты и окружение
+.env
+
+# База данных SQLite
+*.db
+*.db-wal
+*.db-shm
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Логи
+*.log
+
+# IDE
+.idea/
+*.swp
+.DS_Store
