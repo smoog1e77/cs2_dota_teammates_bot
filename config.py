@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     actions_per_minute: int = 20
     # Сколько дней анкета держится в разделе «Взаимные симпатии» (история мэтчей).
     matches_history_days: int = 2
+    # Через сколько дней без активности анкета пропадает из ленты (вернётся, как зайдёт).
+    feed_inactive_days: int = 30
 
     model_config = SettingsConfigDict(
         env_file=".env",

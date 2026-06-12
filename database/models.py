@@ -56,6 +56,10 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+    # Последняя активность — по ней лента прячет давно не заходивших (вернутся, как зайдут).
+    last_active: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
 
 class Profile(Base):

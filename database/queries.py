@@ -40,17 +40,27 @@ async def upsert_user(
     """Создать пользователя или обновить его username/имя (для контактов)."""
     user = await session.get(User, user_id)
     if user is None:
-        user = User(id=user_id, username=username, first_name=first_name)
+        user = User(
+            id=user_id, username=username, first_name=first_name, last_active=_utcnow()
+        )
         session.add(user)
     else:
         user.username = username
         user.first_name = first_name
+        user.last_active = _utcnow()
     await session.flush()
     return user
 
 
 async def get_user(session: AsyncSession, user_id: int) -> User | None:
     return await session.get(User, user_id)
+
+
+async def touch_user_activity(session: AsyncSession, user_id: int) -> None:
+    """Отметить пользователя активным сейчас — для «свежести» ленты."""
+    await session.execute(
+        update(User).where(User.id == user_id).values(last_active=_utcnow())
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -174,12 +184,15 @@ def _filter_conditions(flt: SearchFilter | None, game: str) -> list:
 
 
 def _feed_base(viewer_id: int, game: str, flt: SearchFilter | None):
-    """Общие условия ленты: активна, не своя, не забанен автор, не «свежевиденная»."""
+    """Общие условия ленты: активна, не своя, не забанен и не «уснувший» автор, не «свежевиденная»."""
+    active_cutoff = _utcnow() - timedelta(days=settings.feed_inactive_days)
     return (
         Profile.game == game,
         Profile.is_active.is_(True),
         Profile.user_id != viewer_id,
         User.is_banned.is_(False),
+        # Прячем давно не заходивших — вернутся в ленту, как только снова зайдут.
+        User.last_active >= active_cutoff,
         Profile.user_id.notin_(_seen_subquery(viewer_id, game)),
         *_filter_conditions(flt, game),
     )

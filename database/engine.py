@@ -69,6 +69,12 @@ def _light_migrations(sync_conn) -> None:
     _add_column_if_missing(sync_conn, "profiles", "region", "region VARCHAR(40) DEFAULT ''")
     _add_column_if_missing(sync_conn, "profiles", "extra_photos", "extra_photos TEXT DEFAULT ''")
 
+    # Последняя активность пользователя — для скрытия давно не заходивших из ленты.
+    if _add_column_if_missing(sync_conn, "users", "last_active", "last_active DATETIME"):
+        sync_conn.execute(
+            text("UPDATE users SET last_active = created_at WHERE last_active IS NULL")
+        )
+
     # Регион СНГ: меняем флаг РФ на нейтральный белый (в странах СНГ — без политики).
     # Идемпотентно: после первого прогона старых значений уже не остаётся.
     for table in ("profiles", "search_filters"):

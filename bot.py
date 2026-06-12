@@ -12,6 +12,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from config import settings
 from database.engine import engine, init_db, session_maker
 from handlers import setup_routers
+from middlewares.activity import ActivityMiddleware
 from middlewares.ban import BanMiddleware
 from middlewares.database import DbSessionMiddleware
 
@@ -37,6 +38,9 @@ async def main() -> None:
     # Блокировка забаненных (использует сессию из middleware выше).
     dp.message.middleware(BanMiddleware())
     dp.callback_query.middleware(BanMiddleware())
+    # Отметка «последней активности» — для свежести ленты.
+    dp.message.middleware(ActivityMiddleware())
+    dp.callback_query.middleware(ActivityMiddleware())
     dp.include_router(setup_routers())
 
     logger.info("Бот запущен. Ожидаю сообщения…")

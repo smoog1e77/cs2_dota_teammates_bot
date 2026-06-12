@@ -25,7 +25,7 @@ from datetime import timedelta  # noqa: E402
 from sqlalchemy import update  # noqa: E402
 
 from database.engine import engine, init_db, session_maker  # noqa: E402
-from database.models import GAME_CS2, GAME_DOTA2, GENDER_MALE, Interaction  # noqa: E402
+from database.models import GAME_CS2, GAME_DOTA2, GENDER_MALE, Interaction, User  # noqa: E402
 from database import queries as q  # noqa: E402
 from database.queries import _utcnow  # noqa: E402
 from utils.formatting import compatibility_text, render_profile  # noqa: E402
@@ -283,6 +283,26 @@ async def main() -> None:
         await s.commit()
         m_again = await q.get_recent_matches(s, 70, GAME_CS2)
         check("повторный лайк возвращает матч в историю как новый", any(p.user_id == 71 for p, _ in m_again))
+
+        # --- Свежесть ленты: давно не заходивших прячем -------------------
+        await _make_profile(s, 300, GAME_CS2, "1500–2000", "Sleepy")
+        await _make_profile(s, 301, GAME_CS2, "1500–2000", "Viewer2")
+        fresh = {p.user_id for _ in range(40) if (p := await q.get_next_profile(s, 301, GAME_CS2))}
+        check("свежая анкета видна в ленте", 300 in fresh)
+        # «Усыпляем» автора: последняя активность — раньше окна.
+        await s.execute(
+            update(User)
+            .where(User.id == 300)
+            .values(last_active=_utcnow() - timedelta(days=settings.feed_inactive_days + 5))
+        )
+        await s.commit()
+        stale = {p.user_id for _ in range(40) if (p := await q.get_next_profile(s, 301, GAME_CS2))}
+        check("давно не заходившая анкета скрыта из ленты", 300 not in stale)
+        # Вернулся (любое действие обновляет активность) → снова в ленте.
+        await q.touch_user_activity(s, 300)
+        await s.commit()
+        back = {p.user_id for _ in range(40) if (p := await q.get_next_profile(s, 301, GAME_CS2))}
+        check("после возвращения анкета снова в ленте", 300 in back)
 
         # --- Бан скрывает анкеты из лент ------------------------------------
         await _make_profile(s, 80, GAME_CS2, "1500–2000", "BadGuy")
