@@ -19,19 +19,32 @@ from sqlalchemy.ext.asyncio import (
 from config import settings
 from database.models import Base
 
-# Для SQLite убеждаемся, что папка под файл базы существует. Важно для путей вроде
-# /app/shared/bot.db на хостинге с постоянным хранилищем — иначе бот упал бы, если
-# каталога ещё нет. Для относительного пути (bot.db) и :memory: ничего не делаем.
-if settings.is_sqlite:
-    _db_path = make_url(settings.database_url).database
+# Готовим строку подключения и параметры соединения под нужный драйвер.
+_url = make_url(settings.database_url)
+_connect_args: dict = {}
+
+if _url.drivername.startswith("sqlite"):
+    # Убеждаемся, что папка под файл базы существует — важно для /app/shared/bot.db
+    # (иначе бот упал бы, если каталога ещё нет). Для bot.db и :memory: ничего не делаем.
+    _db_path = _url.database
     if _db_path and _db_path != ":memory:" and os.path.dirname(_db_path):
         os.makedirs(os.path.dirname(_db_path), exist_ok=True)
+elif _url.drivername.startswith("postgresql"):
+    # Облачный Postgres (Neon и т.п.): драйвер — asyncpg, SSL обязателен. asyncpg не
+    # понимает libpq-параметры из строки (sslmode/channel_binding) — убираем их и
+    # включаем SSL здесь. Если драйвер не указан — подставляем asyncpg сами, чтобы
+    # можно было вставить строку Neon как есть.
+    if _url.drivername == "postgresql":
+        _url = _url.set(drivername="postgresql+asyncpg")
+    _url = _url.difference_update_query(["sslmode", "channel_binding"])
+    _connect_args["ssl"] = "require"
 
 # pool_pre_ping — переподключение при «уснувших» соединениях (важно для Postgres).
 engine = create_async_engine(
-    settings.database_url,
+    _url,
     echo=False,
     pool_pre_ping=True,
+    connect_args=_connect_args,
 )
 
 # expire_on_commit=False — объекты остаются доступными после commit().
