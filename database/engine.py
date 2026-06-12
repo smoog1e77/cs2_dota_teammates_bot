@@ -6,7 +6,10 @@
 """
 from __future__ import annotations
 
+import os
+
 from sqlalchemy import event, inspect, text
+from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
@@ -15,6 +18,14 @@ from sqlalchemy.ext.asyncio import (
 
 from config import settings
 from database.models import Base
+
+# Для SQLite убеждаемся, что папка под файл базы существует. Важно для путей вроде
+# /app/shared/bot.db на хостинге с постоянным хранилищем — иначе бот упал бы, если
+# каталога ещё нет. Для относительного пути (bot.db) и :memory: ничего не делаем.
+if settings.is_sqlite:
+    _db_path = make_url(settings.database_url).database
+    if _db_path and _db_path != ":memory:" and os.path.dirname(_db_path):
+        os.makedirs(os.path.dirname(_db_path), exist_ok=True)
 
 # pool_pre_ping — переподключение при «уснувших» соединениях (важно для Postgres).
 engine = create_async_engine(
