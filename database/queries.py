@@ -63,6 +63,19 @@ async def touch_user_activity(session: AsyncSession, user_id: int) -> None:
     )
 
 
+async def is_matches_unlocked(session: AsyncSession, user_id: int) -> bool:
+    """Оплатил ли пользователь разовый доступ к «Взаимным симпатиям»."""
+    user = await session.get(User, user_id)
+    return bool(user and user.matches_unlocked)
+
+
+async def set_matches_unlocked(session: AsyncSession, user_id: int) -> None:
+    """Открыть доступ к «Взаимным симпатиям» навсегда (после оплаты звёздами)."""
+    await session.execute(
+        update(User).where(User.id == user_id).values(matches_unlocked=True)
+    )
+
+
 # --------------------------------------------------------------------------- #
 #  Анкеты
 # --------------------------------------------------------------------------- #

@@ -304,6 +304,13 @@ async def main() -> None:
         back = {p.user_id for _ in range(40) if (p := await q.get_next_profile(s, 301, GAME_CS2))}
         check("после возвращения анкета снова в ленте", 300 in back)
 
+        # --- Платная разблокировка «Взаимных симпатий» --------------------
+        await q.upsert_user(s, 500, "u500", "Payer")
+        check("по умолчанию доступ к взаимным НЕ оплачен", await q.is_matches_unlocked(s, 500) is False)
+        await q.set_matches_unlocked(s, 500)
+        await s.commit()
+        check("после оплаты доступ разблокирован навсегда", await q.is_matches_unlocked(s, 500) is True)
+
         # --- Бан скрывает анкеты из лент ------------------------------------
         await _make_profile(s, 80, GAME_CS2, "1500–2000", "BadGuy")
         await q.set_banned(s, 80, True)

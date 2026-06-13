@@ -12,7 +12,13 @@ from html import escape
 
 from aiogram import Bot, F, Router
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, InputMediaPhoto, Message
+from aiogram.types import (
+    CallbackQuery,
+    InputMediaPhoto,
+    LabeledPrice,
+    Message,
+    PreCheckoutQuery,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import settings
@@ -26,9 +32,11 @@ from database.queries import (
     get_recent_matches,
     get_user,
     increment_views,
+    is_matches_unlocked,
     record_like,
     record_simple_interaction,
     set_banned,
+    set_matches_unlocked,
     upsert_user,
 )
 from keyboards.inline import browse_kb, like_response_kb
@@ -378,6 +386,20 @@ async def start_matches(message: Message, session: AsyncSession) -> None:
             reply_markup=game_menu_kb(game, has_profile=False),
         )
         return
+    # Платный доступ (если включён и ещё не оплачен) — показываем счёт на звёзды.
+    if settings.matches_paid and not await is_matches_unlocked(session, message.from_user.id):
+        await message.answer_invoice(
+            title="💞 Взаимные симпатии",
+            description=(
+                "Разовая разблокировка навсегда: смотри всех, у кого с тобой взаимная "
+                "симпатия, и сразу получай их контакты."
+            ),
+            payload="unlock_matches",
+            provider_token="",  # для Telegram Stars платёжный токен не нужен
+            currency="XTR",
+            prices=[LabeledPrice(label="Доступ навсегда", amount=settings.matches_price_stars)],
+        )
+        return
     matches = await get_recent_matches(session, message.from_user.id, game)
     if not matches:
         await message.answer(
@@ -405,6 +427,26 @@ async def start_matches(message: Message, session: AsyncSession) -> None:
             f"…и ещё {len(matches) - MATCHES_LIMIT}. Показал самые свежие — загляни позже.",
             reply_markup=game_menu_kb(game, has_profile=True),
         )
+
+
+# --------------------------------------------------------------------------- #
+#  Оплата «Взаимных симпатий» за Telegram Stars
+# --------------------------------------------------------------------------- #
+@router.pre_checkout_query()
+async def matches_pre_checkout(pcq: PreCheckoutQuery) -> None:
+    # Обязательный шаг Telegram: подтверждаем, что готовы принять оплату.
+    await pcq.answer(ok=True)
+
+
+@router.message(F.successful_payment)
+async def matches_payment_ok(message: Message, session: AsyncSession) -> None:
+    await set_matches_unlocked(session, message.from_user.id)
+    await session.commit()
+    logger.info("matches unlocked (оплата) для %s", message.from_user.id)
+    await message.answer(
+        "✅ <b>Доступ открыт навсегда!</b>\n"
+        "Загляни в «💞 Взаимные симпатии» — теперь всё видно."
+    )
 
 
 # --------------------------------------------------------------------------- #

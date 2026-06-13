@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     matches_history_days: int = 2
     # Через сколько дней без активности анкета пропадает из ленты (вернётся, как зайдёт).
     feed_inactive_days: int = 30
+    # Платный доступ к «Взаимным симпатиям» за Telegram Stars. По умолчанию ВЫКЛ
+    # (на запуске бесплатно). Включается переменной MATCHES_PAID=true.
+    matches_paid: bool = False
+    # Цена разовой разблокировки в звёздах (для теста ставь MATCHES_PRICE_STARS=5).
+    matches_price_stars: int = 75
 
     model_config = SettingsConfigDict(
         env_file=".env",

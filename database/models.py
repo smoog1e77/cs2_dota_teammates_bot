@@ -60,6 +60,8 @@ class User(Base):
     last_active: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+    # Разовая разблокировка «Взаимных симпатий» за звёзды (True = оплачено навсегда).
+    matches_unlocked: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
 
 class Profile(Base):

@@ -99,6 +99,12 @@ def _light_migrations(sync_conn) -> None:
             text("UPDATE users SET last_active = created_at WHERE last_active IS NULL")
         )
 
+    # Разовая разблокировка «Взаимных симпатий» за звёзды. DEFAULT FALSE — совместимо
+    # и с SQLite, и с PostgreSQL (Neon), где BOOLEAN не принимает 0/1 как дефолт.
+    _add_column_if_missing(
+        sync_conn, "users", "matches_unlocked", "matches_unlocked BOOLEAN DEFAULT FALSE"
+    )
+
     # Регион СНГ: меняем флаг РФ на нейтральный белый (в странах СНГ — без политики).
     # Идемпотентно: после первого прогона старых значений уже не остаётся.
     for table in ("profiles", "search_filters"):
