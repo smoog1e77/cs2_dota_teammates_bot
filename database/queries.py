@@ -314,7 +314,13 @@ class LikeResult:
 
     @property
     def is_mutual(self) -> bool:
+        """Только что возникшая взаимность (для тоста «🎉 Взаимность!»)."""
         return self.status == "mutual"
+
+    @property
+    def matched(self) -> bool:
+        """Пара взаимна — новый мэтч ИЛИ уже бывший (для уведомления о контактах)."""
+        return self.status in ("mutual", "already_mutual")
 
 
 async def _get_interaction(
