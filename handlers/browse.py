@@ -469,7 +469,9 @@ async def cb_like_yes(cb: CallbackQuery, session: AsyncSession) -> None:
         await cb.message.delete()
     except Exception:
         pass
-    if result.is_mutual:
+    # «Ответить взаимностью» — явное согласие, всегда ведёт к мэтчу (мэтч новый или
+    # уже бывший). Иначе ответ между уже мэтчившимися людьми зацикливается.
+    if result.matched:
         await notify_mutual(cb.bot, session, cb.from_user.id, liker_id, game)
         await cb.answer("🎉 Взаимность! Анкета — в разделе «Взаимные симпатии».")
     else:
