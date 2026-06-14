@@ -232,12 +232,12 @@ async def _post_like_notify(
     result: LikeResult,
     message_text: str | None,
 ) -> None:
-    # Уведомляем при ЛЮБОМ лайке — и новом, и повторном. Повтор возможен только
-    # после кулдауна ленты (≤ раз в час на пару), поэтому спама нет, зато лайк
-    # гарантированно доходит до человека.
-    if result.matched:
+    # Уведомляем при ЛЮБОМ лайке, НО «взаимность» — только если мэтч возник прямо
+    # сейчас (status == mutual). Повторный лайк уже мэтчившейся пары (already_mutual)
+    # идёт как обычное «тебя лайкнули», а не мгновенная взаимность от одного лайка.
+    if result.is_mutual:
         await notify_mutual(bot, session, actor_id, target_id, game)
-    else:  # liked / already_liked
+    else:  # liked / already_liked / already_mutual
         await notify_like(bot, session, actor_id, target_id, game, message_text)
 
 
@@ -254,7 +254,7 @@ async def cb_like(cb: CallbackQuery, state: FSMContext, session: AsyncSession) -
     await upsert_user(session, cb.from_user.id, cb.from_user.username, cb.from_user.first_name)
     result = await record_like(session, cb.from_user.id, target_id, game)
     await session.commit()
-    await cb.answer("🎉 Взаимность!" if result.matched else "❤️ Лайк отправлен!")
+    await cb.answer("🎉 Взаимность!" if result.is_mutual else "❤️ Лайк отправлен!")
     await _post_like_notify(cb.bot, session, cb.from_user.id, target_id, game, result, None)
     await _send_next_profile(cb.bot, cb.message.chat.id, state, session, cb.from_user.id, game)
 
@@ -303,7 +303,7 @@ async def cb_message_receive(
             pass
 
     await message.answer(
-        "🎉 Взаимность!" if result.matched else "✅ Сообщение и лайк отправлены!"
+        "🎉 Взаимность!" if result.is_mutual else "✅ Сообщение и лайк отправлены!"
     )
     await _post_like_notify(
         message.bot, session, message.from_user.id, target_id, game, result, text
@@ -469,7 +469,7 @@ async def cb_like_yes(cb: CallbackQuery, session: AsyncSession) -> None:
         await cb.message.delete()
     except Exception:
         pass
-    if result.matched:
+    if result.is_mutual:
         await notify_mutual(cb.bot, session, cb.from_user.id, liker_id, game)
         await cb.answer("🎉 Взаимность! Анкета — в разделе «Взаимные симпатии».")
     else:
