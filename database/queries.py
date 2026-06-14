@@ -458,6 +458,7 @@ async def get_recent_matches(
             User.is_banned.is_(False),
         )
         .order_by(Interaction.updated_at.desc())
+        .limit(settings.matches_show_limit)  # только N последних, чтобы не было каши
     )
     rows = await session.execute(stmt)
     return [(profile, user) for profile, user in rows]

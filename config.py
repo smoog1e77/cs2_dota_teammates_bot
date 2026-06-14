@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     matches_history_days: int = 2
     # Через сколько дней без активности анкета пропадает из ленты (вернётся, как зайдёт).
     feed_inactive_days: int = 30
+    # Сколько последних взаимных симпатий показывать (чтобы список не был кашей).
+    matches_show_limit: int = 3
     # Платный доступ к «Взаимным симпатиям» за Telegram Stars. По умолчанию ВЫКЛ
     # (на запуске бесплатно). Включается переменной MATCHES_PAID=true.
     matches_paid: bool = False

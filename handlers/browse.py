@@ -377,9 +377,6 @@ async def cb_stop(cb: CallbackQuery, state: FSMContext) -> None:
 # --------------------------------------------------------------------------- #
 #  «Взаимные симпатии» — история мэтчей за последние дни
 # --------------------------------------------------------------------------- #
-MATCHES_LIMIT = 10  # сколько карточек показываем за один раз (свежие — первыми)
-
-
 @router.message(F.text.startswith(PREFIX_MATCHES))
 async def start_matches(message: Message, session: AsyncSession) -> None:
     game = detect_game(message.text)
@@ -412,10 +409,10 @@ async def start_matches(message: Message, session: AsyncSession) -> None:
         )
         return
     await message.answer(
-        f"💞 <b>Твои взаимные симпатии</b> ({len(matches)}) 👇\n"
+        "💞 <b>Твои последние взаимные симпатии</b> 👇\n"
         "Кого можно звать в каток прямо сейчас:"
     )
-    for profile, user in matches[:MATCHES_LIMIT]:
+    for profile, user in matches:
         caption = (
             render_profile(profile, game)
             + f"\n\n📨 <b>Контакт:</b> {contact_link(user, profile.user_id)}"
@@ -425,11 +422,6 @@ async def start_matches(message: Message, session: AsyncSession) -> None:
         except Exception:
             pass
         await asyncio.sleep(0.05)  # бережём лимиты Telegram при списке карточек
-    if len(matches) > MATCHES_LIMIT:
-        await message.answer(
-            f"…и ещё {len(matches) - MATCHES_LIMIT}. Показал самые свежие — загляни позже.",
-            reply_markup=game_menu_kb(game, has_profile=True),
-        )
 
 
 # --------------------------------------------------------------------------- #
