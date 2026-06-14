@@ -195,7 +195,7 @@ async def _send_match(
     g = GAMES[game]
     header = f"🎉 <b>Взаимная симпатия в {g['name']}!</b>\nВы понравились друг другу 🎮\n"
     contact = f"\n📨 <b>Контакт:</b> {contact_link(other_user, other_id)}\n"
-    footer = "\nНапиши первым и зовите в катку! 🎮"
+    footer = "\nНапиши первым и зови в катку! 🎮"
     if other_profile:
         # Полная карточка анкеты тиммейта: ник, пол, возраст, ранг, о себе.
         caption = header + "\n" + render_profile(other_profile, game) + "\n" + contact + footer
