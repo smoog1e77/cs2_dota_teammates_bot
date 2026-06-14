@@ -195,7 +195,7 @@ async def _send_match(
     g = GAMES[game]
     header = f"🎉 <b>Взаимная симпатия в {g['name']}!</b>\nВы понравились друг другу 🎮\n"
     contact = f"\n📨 <b>Контакт:</b> {contact_link(other_user, other_id)}\n"
-    footer = "\nНапиши первым и зовите в каток! 🎮"
+    footer = "\nНапиши первым и зовите в катку! 🎮"
     if other_profile:
         # Полная карточка анкеты тиммейта: ник, пол, возраст, ранг, о себе.
         caption = header + "\n" + render_profile(other_profile, game) + "\n" + contact + footer
@@ -410,7 +410,7 @@ async def start_matches(message: Message, session: AsyncSession) -> None:
         return
     await message.answer(
         "💞 <b>Твои последние взаимные симпатии</b> 👇\n"
-        "Кого можно звать в каток прямо сейчас:"
+        "Кого можно звать в катку прямо сейчас:"
     )
     for profile, user in matches:
         caption = (
