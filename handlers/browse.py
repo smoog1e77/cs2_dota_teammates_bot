@@ -25,8 +25,6 @@ from config import settings
 from database.models import ACTION_REPORT, ACTION_SKIP
 from database.queries import (
     LikeResult,
-    count_reports,
-    deactivate_profile,
     get_next_profile,
     get_profile,
     get_recent_matches,
@@ -336,9 +334,9 @@ async def cb_next(cb: CallbackQuery, state: FSMContext, session: AsyncSession) -
 async def cb_report(cb: CallbackQuery, state: FSMContext, session: AsyncSession) -> None:
     _, _, target_s, game = cb.data.split(":")
     target_id = int(target_s)
+    # Жалобу фиксируем (видна админу в «🚩 Жалобы»), но анкету НЕ скрываем автоматически —
+    # решение принимает админ вручную. Это защищает от массовых ложных жалоб троллей.
     await record_simple_interaction(session, cb.from_user.id, target_id, game, ACTION_REPORT)
-    if await count_reports(session, target_id, game) >= settings.reports_to_hide:
-        await deactivate_profile(session, target_id, game)
     await session.commit()
     await cb.answer("🚫 Жалоба отправлена. Спасибо!")
     await _send_next_profile(cb.bot, cb.message.chat.id, state, session, cb.from_user.id, game)
