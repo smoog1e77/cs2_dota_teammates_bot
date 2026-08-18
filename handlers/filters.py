@@ -55,7 +55,7 @@ def _summary(flt, game: str) -> str:
         f"🎂 Возраст: <b>{age}</b>\n"
         f"{GAMES[game]['rank_emoji']} {label}: <b>{rank}</b>\n"
         f"🌍 Регион: <b>{region}</b>\n\n"
-        "Что настроим?"
+        "Что настроим ?"
     )
 
 
