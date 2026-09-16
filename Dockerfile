@@ -9,5 +9,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Затем код бота.
 COPY . .
 
-# Бот работает на long polling (без веб-сервера и webhook).
+# Бот работет на long polling (без веб-сервера и webhook).
 CMD ["python", "bot.py"]
