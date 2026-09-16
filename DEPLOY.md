@@ -125,7 +125,7 @@ nano .env
 ```
 Заполнить:
 ```
-BOT_TOKEN=333
+BOT_TOKEN=8558537182:AFHgagaUAy3IOXnjr5UXT-x9Y-tQzvHaieM
 DATABASE_URL=postgresql+asyncpg://botuser:ПАРОЛЬ@localhost:5432/teammates
 ADMIN_IDS=ТВОЙ_TELEGRAM_ID
 REPORTS_TO_HIDE=5
